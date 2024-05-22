@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <record id="server_action_import" model="ir.actions.server">
+            <field name="name">Scan Serial</field>
+            <field name="model_id" ref="model_stock_picking"/>
+            <field name="binding_model_id" ref="model_stock_picking"/>
+            <field name="state">code</field>
+            <field name="code">
+                action = {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'stock.picking.serial.number.wizard',
+                    'target': 'new',
+                    'context': {'active_id': env.context.get('active_id')},
+                    'views':[(env.ref('scan_serial_transfer.stock_picking_serial_number_wizard_view').id,'form')]
+                }
+            </field>
+        </record>
+    </data>
+</odoo>
+

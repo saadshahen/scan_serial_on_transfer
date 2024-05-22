@@ -1,0 +1,42 @@
+<odoo>
+    <data>
+        <record id="stock_picking_serial_number_wizard_view" model="ir.ui.view">
+            <field name="name">stock.picking.serial.number.wizard</field>
+            <field name="model">stock.picking.serial.number.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Serial Number Wizard" class="o_form_container">
+                    <field name="control_button" invisible="1"/>
+                    <header style="background-color: white; border: 2px solid #dee2e6; font-size: 15px; font-weight: bold; border-radius: 5px; padding: 15px;">
+                        <div class="header">
+                            <field name="transfer_id" readonly="1"/>
+                        </div>
+                    </header>
+                    <div class="row">
+                        <div class="col-6">
+                            <group string="Serial Number" class="your_wizard_class" style="background-color: white; border: 2px solid #dee2e6; font-size: 15px; border-radius: 5px; padding: 15px; ">
+                                <field name="serial_number" string="Serial Number"/>
+                                <field name="product_name" string="Product Name" readonly="1"/>
+                            </group>
+                        </div>
+                        <div class="col-6">
+                            <group string="Product Details" style="background-color: white; border: 2px solid #dee2e6; font-size: 15px; border-radius: 5px; padding: 15px;">
+                                <field name="serial_number_count" string="Product Count" readonly="1"/>
+                                <field name="import_file" widget="binary" filename="filename" string="Import File" />
+                            </group>
+                        </div>
+                    </div>
+                    <footer>
+                        <button name="import_excel" type="object" string="Import Excel" class="oe_highlight" />
+                        <button string="Finish" class="btn-primary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <record id="view_action_stock_picking_serial_number_wizard" model="ir.actions.act_window">
+            <field name="name">New Wizard Name</field>
+            <field name="res_model">stock.picking.serial.number.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+    </data>
+</odoo>

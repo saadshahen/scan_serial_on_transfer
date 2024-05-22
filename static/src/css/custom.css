@@ -1,0 +1,50 @@
+/* stock_picking_serial_number_wizard.css */
+
+/* Set the background color of the wizard */
+.o_form_container {
+    background-color: #f8f9fa;
+    padding: 30px;
+    border-radius: 10px;
+}
+
+/* Style the header */
+.o_form_container .header {
+    margin: 10px;
+    font-weight: bold;
+    font-size: 20px;
+    /*background-color: #f0f0f0;*/
+}
+
+/* Style the groups */
+.o_form_container .row-55 {
+    display: flex;
+    justify-content: space-between;
+}
+
+.o_form_container .row-55 .coll-6 {
+    flex-basis: 48%;
+}
+
+.o_form_container .row-55 .group {
+    background-color: white;
+    border: 5px solid #dee2e6;
+    font-size: 20px;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.o_form_container .row-55 .group .field {
+    /*margin-bottom: 10px;*/
+    font-size: 15px;
+}
+
+/* Style the footer */
+.o_form_container footer {
+    margin-top: 10px;
+    text-align: right;
+}
+
+.o_form_container footer button {
+    margin-left: 50px;
+}
