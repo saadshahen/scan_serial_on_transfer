@@ -113,7 +113,7 @@ class SerialNumberWizard(models.TransientModel):
                         'move_id': move.id,
                         'product_id': lot[0].product_id.id,
                         'lot_id': lot[0].id,
-                        'qty_done': 1.0,
+                        'quanity': 1.0,        #if u have odoo less than 17 change this field to => qty-done
                     })
 
                     self.product_name = lot[0].product_id.name
