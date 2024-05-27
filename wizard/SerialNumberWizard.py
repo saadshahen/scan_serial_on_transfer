@@ -1,9 +1,8 @@
 from odoo import models, fields, api
 from odoo.exceptions import UserError
-import winsound
 import base64
 import xlrd
-
+import winsound
 class SerialNumberWizard(models.TransientModel):
     _name = 'stock.picking.serial.number.wizard'
 
@@ -11,51 +10,34 @@ class SerialNumberWizard(models.TransientModel):
     product_name = fields.Char(string='Product Name', compute='_compute_product_name', readonly=True, store=True)
     transfer_id = fields.Many2one('stock.picking')
     serial_number_count = fields.Integer(string='Serial Number Count', default=0)
-
     picking_type_id = fields.Many2one('stock.picking.type')
     control_button = fields.Boolean(related='picking_type_id.control_button', string='Import File')
+    import_file = fields.Binary(string='Import File', filename='FileName.xls')
 
-    import_file = fields.Binary(string='Import File', filename='FileName.xlsx')
 
     def import_excel(self):
-        if self.transfer_id.picking_type_id.control_button == False:
+        if self.transfer_id.picking_type_id.control_button is not True:
             raise UserError("check administrator to allow Import File")
 
         decoded_data = base64.b64decode(self.import_file)
         workbook = xlrd.open_workbook(file_contents=decoded_data)
         sheet = workbook.sheet_by_index(0)
 
-        invalid_serial_numbers = []
-        duplicate_serial_numbers = []
-        valid_serial_numbers = []
+        collectedserials = []
+        for row_index in range(1, sheet.nrows):
+            serial_number = str(sheet.cell_value(row_index, 0))
+            if serial_number.endswith('.0'):
+                serial_number = serial_number[:-2]
+            collectedserials.append(serial_number)
+        existing_lots = self.env['stock.lot'].search([('name', 'in', collectedserials)])
+        existing_lot_names = set(existing_lots.mapped('name'))
 
-        for row_index in range(sheet.nrows):
-            if row_index > 0:  # Process all rows except the header row
-                serial_number = sheet.cell_value(row_index, 0)
+        invalid_serial_numbers = [serial for serial in collectedserials if serial not in existing_lot_names]
 
-                # Check for invalid serial numbers
-                try:
-                    if isinstance(serial_number, float):
-                        serial_number = str(int(serial_number))
-                    else:
-                        serial_number = str(serial_number)
+        # Collect duplicated serial numbers
+        duplicate_serial_numbers = [serial for serial in collectedserials if collectedserials.count(serial) > 1]
+        duplicate_serial_numbers = list(set(duplicate_serial_numbers))  # Remove duplicates from the duplicate list
 
-                    xldate = xlrd.xldate.xldate_as_datetime(sheet.cell_value(row_index, 0), workbook.datemode)
-                    if xldate == "Invalid":
-                        invalid_serial_numbers.append(serial_number)
-                        continue
-                except (TypeError, ValueError):
-                    invalid_serial_numbers.append(serial_number)
-                    continue
-
-                # Check for duplicate serial numbers
-                if serial_number in valid_serial_numbers:
-                    duplicate_serial_numbers.append(serial_number)
-                    continue
-
-                valid_serial_numbers.append(serial_number)
-
-        # Raise errors for invalid and duplicate serial numbers
         if invalid_serial_numbers:
             self.play_error_sound()
             raise UserError(f"Please enter valid serial numbers: {invalid_serial_numbers}")
@@ -65,12 +47,11 @@ class SerialNumberWizard(models.TransientModel):
             raise UserError(f"Duplicate serial numbers found: {duplicate_serial_numbers}")
 
         # Process the valid serial numbers
-        for serial_number in valid_serial_numbers:
+        for serial_number in existing_lot_names:
             self._compute_product_name_values([serial_number])
 
         # Update the picking with the new move lines
         self.transfer_id.action_assign()
-
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'stock.picking',
@@ -79,13 +60,14 @@ class SerialNumberWizard(models.TransientModel):
             'target': 'current',
         }
 
-    def play_error_sound(self, times=2):
+    def play_error_sound(self):
         # Define a function to play an error sound multiple times
-        for _ in range(times):
-            winsound.Beep(1000, 500)
+        winsound.Beep(2000, 1500)
+        pass
 
     @api.depends('serial_number')
     def _compute_product_name(self):
+
         for record in self:
             if record.serial_number:
                 serial_numbers = [record.serial_number]  # Convert single serial number to a list
@@ -107,7 +89,7 @@ class SerialNumberWizard(models.TransientModel):
                         ('picking_id', '=', self.transfer_id.id),
                         ('product_id', '=', lot[0].product_id.id)
                     ], limit=1)
-                    if move == False:
+                    if move is not True:
                         move = self.env['stock.move'].create({
                             'name': lot[0].product_id.name,
                             'product_id': lot[0].product_id.id,
@@ -124,17 +106,17 @@ class SerialNumberWizard(models.TransientModel):
                     ], limit=1)
                     if move_line:
                         self.play_error_sound()
-                        raise UserError(f"serial number added before '{serial_number}'")
+                        raise UserError(f"serial number added before => {serial_number}")
 
-                    move.write({'move_line_ids': [(0, 0, {
+                    move = self.env['stock.move.line'].create({
                         'picking_id': self.transfer_id.id,
                         'move_id': move.id,
                         'product_id': lot[0].product_id.id,
                         'lot_id': lot[0].id,
                         'qty_done': 1.0,
-                    })]})
-                    self.product_name = lot.product_id.name
-                    # self.check_serial_numbers(move)
+                    })
+
+                    self.product_name = lot[0].product_id.name
                     self.serial_number_count += 1
                 else:
                     invalid_serial_numbers.append(serial_number)
